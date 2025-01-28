@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>计算角色血量</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .reduce-button {
+      background-color: #dc3545;
+      margin-left: 10px;
+    }
+    .reduce-button:hover {
+      background-color: #c82333;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 5px;
+    }
+    .health-input-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .health-input-group input {
+      flex: 1;
+      margin-bottom: 0;
+      margin-right: 10px;
+    }
+    .name-input {
+      width: 120px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>计算角色血量</h1>
+    <label for="enemyCount">角色数量：</label>
+    <input type="number" id="enemyCount" placeholder="请输入角色数量" min="1">
+
+    <div id="healthInputs"></div>
+
+    <button onclick="calculateHealth()">计算总血量</button>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    // 动态生成角色姓名输入框、血量输入框和减少血量按钮
+    document.getElementById('enemyCount').addEventListener('input', function () {
+      const enemyCount = parseInt(this.value);
+      const healthInputs = document.getElementById('healthInputs');
+      healthInputs.innerHTML = ''; // 清空之前的输入框
+
+      if (enemyCount > 0) {
+        for (let i = 1; i <= enemyCount; i++) {
+          const group = document.createElement('div');
+          group.className = 'health-input-group';
+
+          // 角色姓名输入框
+          const nameInput = document.createElement('input');
+          nameInput.type = 'text';
+          nameInput.id = `name${i}`;
+          nameInput.placeholder = `角色 ${i} 姓名`;
+          nameInput.className = 'name-input';
+          group.appendChild(nameInput);
+
+          // 血量输入框
+          const healthInput = document.createElement('input');
+          healthInput.type = 'number';
+          healthInput.id = `health${i}`;
+          healthInput.placeholder = `血量`;
+          healthInput.min = '0';
+          group.appendChild(healthInput);
+
+          // 减少血量按钮
+          const reduceButton = document.createElement('button');
+          reduceButton.textContent = '减少血量';
+          reduceButton.className = 'reduce-button';
+          reduceButton.onclick = () => reduceHealth(i);
+          group.appendChild(reduceButton);
+
+          healthInputs.appendChild(group);
+        }
+      }
+    });
+
+    // 计算总血量
+    function calculateHealth() {
+      const enemyCount = parseInt(document.getElementById('enemyCount').value);
+      let totalHealth = 0;
+      let resultText = '';
+
+      for (let i = 1; i <= enemyCount; i++) {
+        const name = document.getElementById(`name${i}`).value || `角色 ${i}`;
+        const health = parseFloat(document.getElementById(`health${i}`).value);
+
+        if (!isNaN(health) && health >= 0) {
+          totalHealth += health;
+          resultText += `<strong>${name} 的血量：</strong>${health.toFixed(2)}<br>`;
+        }
+      }
+
+      resultText += `<strong>总血量：</strong>${totalHealth.toFixed(2)}`;
+      document.getElementById('result').innerHTML = resultText;
+    }
+
+    // 减少单个角色的血量
+    function reduceHealth(enemyIndex) {
+      const healthInput = document.getElementById(`health${enemyIndex}`);
+      let currentHealth = parseFloat(healthInput.value);
+
+      if (!isNaN(currentHealth) && currentHealth > 0) {
+        const reduceAmount = parseFloat(prompt('请输入减少的血量：'));
+        if (!isNaN(reduceAmount) && reduceAmount > 0) {
+          currentHealth -= reduceAmount;
+          if (currentHealth < 0) currentHealth = 0; // 血量不能为负数
+          healthInput.value = currentHealth;
+        } else {
+          alert('请输入有效的血量值！');
+        }
+      } else {
+        alert('当前血量无效！');
+      }
+    }
+  </script>
+</body>
+</html>
