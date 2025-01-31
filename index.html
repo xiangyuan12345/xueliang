@@ -10,7 +10,7 @@
       margin: 20px;
     }
     .container {
-      max-width: 500px;
+      max-width: 600px; /* 增加宽度以适应新栏位 */
       margin: 0 auto;
       padding: 20px;
       border: 1px solid #ccc;
@@ -67,144 +67,187 @@
     .name-input {
       width: 120px;
     }
+    .id-input {
+      width: 60px; /* 编号栏位的宽度 */
+    }
+    .level-input {
+      width: 60px; /* 新增栏位的宽度 */
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>计算角色血量</h1>
-    <label for="enemyCount">角色数量：</label>
-    <input type="number" id="enemyCount" placeholder="请输入角色数量" min="1">
+<div class="container">
+  <h1>计算角色血量</h1>
+  <label for="enemyCount">角色数量：</label>
+  <input type="number" id="enemyCount" placeholder="请输入角色数量" min="1">
 
-    <div id="healthInputs"></div>
+  <div id="healthInputs"></div>
 
-    <button onclick="calculateHealth()">计算总血量</button>
+  <button onclick="calculateHealth()">计算总血量</button>
 
-    <div class="result" id="result"></div>
-  </div>
+  <div class="result" id="result"></div>
+</div>
 
-  <script>
-    // 从 localStorage 加载数据
-    function loadData() {
-      const savedData = localStorage.getItem('roleData');
-      if (savedData) {
-        const data = JSON.parse(savedData);
-        document.getElementById('enemyCount').value = data.count;
-        generateInputs(data.count, data.roles);
-      }
+<script>
+  // 从 localStorage 加载数据
+  function loadData() {
+    const savedData = localStorage.getItem('roleData');
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      document.getElementById('enemyCount').value = data.count;
+      generateInputs(data.count, data.roles);
+    }
+  }
+
+  // 保存数据到 localStorage
+  function saveData() {
+    const enemyCount = parseInt(document.getElementById('enemyCount').value);
+    const roles = [];
+
+    for (let i = 1; i <= enemyCount; i++) {
+      const id = document.getElementById(`id${i}`).value;
+      const level = document.getElementById(`level${i}`).value; // 新增栏位
+      const name = document.getElementById(`name${i}`).value;
+      const health = document.getElementById(`health${i}`).value;
+      roles.push({ id, level, name, health });
     }
 
-    // 保存数据到 localStorage
-    function saveData() {
-      const enemyCount = parseInt(document.getElementById('enemyCount').value);
-      const roles = [];
+    const data = {
+      count: enemyCount,
+      roles: roles,
+    };
+    localStorage.setItem('roleData', JSON.stringify(data));
+  }
 
+  // 动态生成角色编号、等级、姓名输入框、血量输入框和减少血量按钮
+  function generateInputs(enemyCount, savedRoles = []) {
+    const healthInputs = document.getElementById('healthInputs');
+    healthInputs.innerHTML = ''; // 清空之前的输入框
+
+    if (enemyCount > 0) {
       for (let i = 1; i <= enemyCount; i++) {
-        const name = document.getElementById(`name${i}`).value;
-        const health = document.getElementById(`health${i}`).value;
-        roles.push({ name, health });
-      }
+        const group = document.createElement('div');
+        group.className = 'health-input-group';
 
-      const data = {
-        count: enemyCount,
-        roles: roles,
-      };
-      localStorage.setItem('roleData', JSON.stringify(data));
+        // 角色编号输入框
+        const idInput = document.createElement('input');
+        idInput.type = 'text';
+        idInput.id = `id${i}`;
+        idInput.placeholder = `角色 ${i} 姓名`;
+        idInput.className = 'id-input';
+        if (savedRoles[i - 1]) {
+          idInput.value = savedRoles[i - 1].id;
+        }
+        group.appendChild(idInput);
+
+        // 角色调整输入框
+        const add = document.createElement('input');
+        add.type = 'number';
+        add.id = `level${i}`;
+        add.placeholder = `调整值`;
+        add.className = 'level-input';
+        if (savedRoles[i - 1]) {
+          add.value = savedRoles[i - 1].level;
+        }
+        group.appendChild(add);
+
+        // 角色AC输入框（新增栏位）
+        const levelInput = document.createElement('input');
+        levelInput.type = 'number';
+        levelInput.id = `level${i}`;
+        levelInput.placeholder = `AC`;
+        levelInput.className = 'level-input';
+        if (savedRoles[i - 1]) {
+          levelInput.value = savedRoles[i - 1].level;
+        }
+        group.appendChild(levelInput);
+
+        // 角色标记输入框
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.id = `name${i}`;
+        nameInput.placeholder = `标记`;
+        nameInput.className = 'name-input';
+        if (savedRoles[i - 1]) {
+          nameInput.value = savedRoles[i - 1].name;
+        }
+        group.appendChild(nameInput);
+
+        // 血量输入框
+        const healthInput = document.createElement('input');
+        healthInput.type = 'number';
+        healthInput.id = `health${i}`;
+        healthInput.placeholder = `血量`;
+        healthInput.min = '0';
+        if (savedRoles[i - 1]) {
+          healthInput.value = savedRoles[i - 1].health;
+        }
+        group.appendChild(healthInput);
+
+        // 减少血量按钮
+        const reduceButton = document.createElement('button');
+        reduceButton.textContent = '减少血量';
+        reduceButton.className = 'reduce-button';
+        reduceButton.onclick = () => reduceHealth(i);
+        group.appendChild(reduceButton);
+
+        healthInputs.appendChild(group);
+      }
+    }
+  }
+
+  // 监听角色数量输入框的变化
+  document.getElementById('enemyCount').addEventListener('input', function () {
+    const enemyCount = parseInt(this.value);
+    generateInputs(enemyCount);
+    saveData();
+  });
+
+  // 计算总血量
+  function calculateHealth() {
+    const enemyCount = parseInt(document.getElementById('enemyCount').value);
+    let totalHealth = 0;
+    let resultText = '';
+
+    for (let i = 1; i <= enemyCount; i++) {
+      const id = document.getElementById(`id${i}`).value || `编号 ${i}`;
+      const level = document.getElementById(`level${i}`).value || `等级 ${i}`; // 新增栏位
+      const name = document.getElementById(`name${i}`).value || `角色 ${i}`;
+      const health = parseFloat(document.getElementById(`health${i}`).value);
+
+      if (!isNaN(health) && health >= 0) {
+        totalHealth += health;
+        resultText += `<strong>${id} - ${level} - ${name} 的血量：</strong>${health.toFixed(2)}<br>`;
+      }
     }
 
-    // 动态生成角色姓名输入框、血量输入框和减少血量按钮
-    function generateInputs(enemyCount, savedRoles = []) {
-      const healthInputs = document.getElementById('healthInputs');
-      healthInputs.innerHTML = ''; // 清空之前的输入框
+    resultText += `<strong>总血量：</strong>${totalHealth.toFixed(2)}`;
+    document.getElementById('result').innerHTML = resultText;
+    saveData(); // 保存数据
+  }
 
-      if (enemyCount > 0) {
-        for (let i = 1; i <= enemyCount; i++) {
-          const group = document.createElement('div');
-          group.className = 'health-input-group';
+  // 减少单个角色的血量
+  function reduceHealth(enemyIndex) {
+    const healthInput = document.getElementById(`health${enemyIndex}`);
+    let currentHealth = parseFloat(healthInput.value);
 
-          // 角色姓名输入框
-          const nameInput = document.createElement('input');
-          nameInput.type = 'text';
-          nameInput.id = `name${i}`;
-          nameInput.placeholder = `角色 ${i} 姓名`;
-          nameInput.className = 'name-input';
-          if (savedRoles[i - 1]) {
-            nameInput.value = savedRoles[i - 1].name;
-          }
-          group.appendChild(nameInput);
-
-          // 血量输入框
-          const healthInput = document.createElement('input');
-          healthInput.type = 'number';
-          healthInput.id = `health${i}`;
-          healthInput.placeholder = `血量`;
-          healthInput.min = '0';
-          if (savedRoles[i - 1]) {
-            healthInput.value = savedRoles[i - 1].health;
-          }
-          group.appendChild(healthInput);
-
-          // 减少血量按钮
-          const reduceButton = document.createElement('button');
-          reduceButton.textContent = '减少血量';
-          reduceButton.className = 'reduce-button';
-          reduceButton.onclick = () => reduceHealth(i);
-          group.appendChild(reduceButton);
-
-          healthInputs.appendChild(group);
-        }
-      }
-    }
-
-    // 监听角色数量输入框的变化
-    document.getElementById('enemyCount').addEventListener('input', function () {
-      const enemyCount = parseInt(this.value);
-      generateInputs(enemyCount);
-      saveData();
-    });
-
-    // 计算总血量
-    function calculateHealth() {
-      const enemyCount = parseInt(document.getElementById('enemyCount').value);
-      let totalHealth = 0;
-      let resultText = '';
-
-      for (let i = 1; i <= enemyCount; i++) {
-        const name = document.getElementById(`name${i}`).value || `角色 ${i}`;
-        const health = parseFloat(document.getElementById(`health${i}`).value);
-
-        if (!isNaN(health) && health >= 0) {
-          totalHealth += health;
-          resultText += `<strong>${name} 的血量：</strong>${health.toFixed(2)}<br>`;
-        }
-      }
-
-      resultText += `<strong>总血量：</strong>${totalHealth.toFixed(2)}`;
-      document.getElementById('result').innerHTML = resultText;
-      saveData(); // 保存数据
-    }
-
-    // 减少单个角色的血量
-    function reduceHealth(enemyIndex) {
-      const healthInput = document.getElementById(`health${enemyIndex}`);
-      let currentHealth = parseFloat(healthInput.value);
-
-      if (!isNaN(currentHealth) && currentHealth > 0) {
-        const reduceAmount = parseFloat(prompt('请输入减少的血量：'));
-        if (!isNaN(reduceAmount) && reduceAmount > 0) {
-          currentHealth -= reduceAmount;
-          if (currentHealth < 0) currentHealth = 0; // 血量不能为负数
-          healthInput.value = currentHealth;
-          saveData(); // 保存数据
-        } else {
-          alert('请输入有效的血量值！');
-        }
+    if (!isNaN(currentHealth) && currentHealth > 0) {
+      const reduceAmount = parseFloat(prompt('请输入减少的血量：'));
+      if (!isNaN(reduceAmount) && reduceAmount > 0) {
+        currentHealth -= reduceAmount;
+        if (currentHealth < 0) currentHealth = 0; // 血量不能为负数
+        healthInput.value = currentHealth;
+        saveData(); // 保存数据
       } else {
-        alert('当前血量无效！');
+        alert('请输入有效的血量值！');
       }
+    } else {
+      alert('当前血量无效！');
     }
+  }
 
-    // 页面加载时加载保存的数据
-    window.onload = loadData;
-  </script>
+  // 页面加载时加载保存的数据
+  window.onload = loadData;
+</script>
 </body>
 </html>
